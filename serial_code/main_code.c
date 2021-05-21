@@ -339,6 +339,20 @@ double XZ_norm(double X[][100][100],double A[100][100],double B[100][100],double
 	return fnorm_XZ;
 }
 
+void reconstruct(double Z[100][100][100], double A[][100], double B[][100], double C[][100],int n1, int n2, int n3, int cp,double lambda){
+	for(int i=0;i<n1;i++){
+		for(int j=0;j<n2;j++){
+			for(int k=0;k<n3;k++){
+				Z[i][j][k] = 0;
+				for(int f=0;f<cp;f++){
+					Z[i][j][k] += lambda[f]*A[i][f]*B[j][f]*C[k][f];
+				}
+			}
+		}
+	}
+
+}
+
 int main(int argc,char* argv[]){
 
 	int i,j,k,f, max_iter = 1000, ite = 0;
@@ -363,6 +377,7 @@ int main(int argc,char* argv[]){
 	while(ite<max_iter){
 		ite += 1;
 		collection = mttkrp(X,A,B,C,n1,n2,n3,cp);
+
 		transpose(n1,cp,A,A_t);
 		transpose(n2,cp,B,B_t);
 		transpose(n3,cp,C,C_t);
@@ -379,17 +394,19 @@ int main(int argc,char* argv[]){
 		inverse_symmetric_matrix(cp,cp,had_2,inv_had_2);
 		inverse_symmetric_matrix(cp,cp,had_3,inv_had_3);
 
-		matmul(cp,cp,inv_had_1,cp,n1,A_t);
+		matmul(cp,cp,inv_had_1,cp,n1,collection.Ahat,A_t);
 		transpose(cp,n1,A_t,A);
-		matmul(cp,cp,inv_had_2,cp,n2,B_t);
+		matmul(cp,cp,inv_had_2,cp,n2,collection.Bhat,B_t);
 		transpose(cp,n2,B_t,B);
-		matmul(cp,cp,inv_had_3,cp,n3,C_t);
+		matmul(cp,cp,inv_had_3,cp,n3,collection.Chat,C_t);
 		transpose(cp,n3,C_t,C);
 
 		Xhat_norm = Z_norm(A,B,C,n1,n2,n3,cp,lambda); // Lambda?
 		norm_XZ = XZ_norm(X,A,B,C,n1,n2,n3,cp,lambda);
 		error = sqrt(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*norm_XZ*norm_XZ);
 	}
+
+	reconstruct(Z,A,B,C,n1,n2,n3,cp,lambda);
 
 	return 0;
 }

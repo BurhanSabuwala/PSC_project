@@ -6,6 +6,8 @@
 #include<omp.h>
 #endif
 
+int n1,n2,n3,cp;
+
 struct matrices
 {
 	double hat_A[100][100],hat_B[100][100],hat_C[100][100];	
@@ -295,22 +297,22 @@ void inverse_symmetric_matrix(int nrow, int ncol, double A[][ncol], double inv_A
 
 }
 
-double Z_norm(double A[100][100], double B[100][100], double C[100][100], int n1, int n2, int n3, double lambda[]){
+double Z_norm(double A[100][100], double B[100][100], double C[100][100], int n1, int n2, int n3, int cp, double lambda[]){
 
-	double fnorm_Z = 0;
+	double *fnorm_Z;
 
 	double lambda_t[cp];
 
 	double Ata[cp][cp], Btb[cp][cp], Ctc[cp][cp], tmp[cp][cp],full[cp][cp];
-	double At[cp][n1], Bt[cp][n2], Ct[cp][n3],tmp2[1][cp];
+	double A_t[cp][n1], B_t[cp][n2], C_t[cp][n3],tmp2[1][cp];
 
 	transpose(n1,cp,A,A_t);
 	transpose(n2,cp,B,B_t);
 	transpose(n3,cp,C,C_t);
-
-	matmul(cp, n1, A_T, n1, cp, C, Ata);
-	matmul(cp, n2, B_T, n2, cp, C, Btb);
-	matmul(cp, n3, C_T, n3, cp, C, Ctc);
+	
+	matmul(cp, n1, A_t, n1, cp, C, Ata);
+	matmul(cp, n2, B_t, n2, cp, C, Btb);
+	matmul(cp, n3, C_t, n3, cp, C, Ctc);
 
 
 	Hadamard(cp,cp,Ctc,Btb,tmp);
@@ -320,10 +322,10 @@ double Z_norm(double A[100][100], double B[100][100], double C[100][100], int n1
 	matmul(1,cp,lambda_t,cp,cp,full,tmp2);
 	matmul(1,cp,tmp2,cp,1,lambda,fnorm_Z);
 
-	return fnorm_Z;
+	return *fnorm_Z;
 }
 
-double XZ_norm(double X[][100][100],double A[100][100],double B[100][100],double C[100][100], int n1, int n2, int n3, int cp, double lambda){
+double XZ_norm(double X[][100][100],double A[100][100],double B[100][100],double C[100][100], int n1, int n2, int n3, int cp, double lambda[]){
 	double fnorm_XZ = 0;
 
 	for(int f = 0; f<cp;f++){
@@ -339,7 +341,7 @@ double XZ_norm(double X[][100][100],double A[100][100],double B[100][100],double
 	return fnorm_XZ;
 }
 
-void reconstruct(double Z[100][100][100], double A[][100], double B[][100], double C[][100],int n1, int n2, int n3, int cp,double lambda){
+void reconstruct(double Z[100][100][100], double A[][100], double B[][100], double C[][100],int n1, int n2, int n3, int cp,double lambda[]){
 	for(int i=0;i<n1;i++){
 		for(int j=0;j<n2;j++){
 			for(int k=0;k<n3;k++){
@@ -355,7 +357,7 @@ void reconstruct(double Z[100][100][100], double A[][100], double B[][100], doub
 
 int main(int argc,char* argv[]){
 
-	int i,j,k,f, max_iter = 1000, ite = 0;
+	int i,j,k,f,cp,n1,n2,n3, max_iter = 1000, ite = 0;
 	struct matrices collection;
 
 	printf("Enter the dimensions of the matrix: ");
@@ -381,10 +383,10 @@ int main(int argc,char* argv[]){
 		transpose(n1,cp,A,A_t);
 		transpose(n2,cp,B,B_t);
 		transpose(n3,cp,C,C_t);
-
-		matmul(cp, n1, A_T, n1, cp, C, Ata);
-		matmul(cp, n2, B_T, n2, cp, C, Btb);
-		matmul(cp, n3, C_T, n3, cp, C, Ctc);
+		
+		matmul(cp, n1, A_t, n1, cp, C, Ata);
+		matmul(cp, n2, B_t, n2, cp, C, Btb);
+		matmul(cp, n3, C_t, n3, cp, C, Ctc);
 
 		Hadamard(cp,cp,Ctc,Btb,had_1);
 		Hadamard(cp,cp,Ctc,Ata,had_2);
@@ -394,11 +396,11 @@ int main(int argc,char* argv[]){
 		inverse_symmetric_matrix(cp,cp,had_2,inv_had_2);
 		inverse_symmetric_matrix(cp,cp,had_3,inv_had_3);
 
-		matmul(cp,cp,inv_had_1,cp,n1,collection.Ahat,A_t);
+		matmul(cp,cp,inv_had_1,cp,n1,collection.hat_A,A_t);
 		transpose(cp,n1,A_t,A);
-		matmul(cp,cp,inv_had_2,cp,n2,collection.Bhat,B_t);
+		matmul(cp,cp,inv_had_2,cp,n2,collection.hat_B,B_t);
 		transpose(cp,n2,B_t,B);
-		matmul(cp,cp,inv_had_3,cp,n3,collection.Chat,C_t);
+		matmul(cp,cp,inv_had_3,cp,n3,collection.hat_C,C_t);
 		transpose(cp,n3,C_t,C);
 
 		Xhat_norm = Z_norm(A,B,C,n1,n2,n3,cp,lambda); // Lambda?

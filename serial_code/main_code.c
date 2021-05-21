@@ -358,7 +358,7 @@ int main(int argc,char* argv[]){
 	sample_init_X(X,n1,n2,n3);
 	sample_init_ABC(A,B,C,n1,n2,n3,cp);
 	
-	double X_norm = tensor_norm(X,n1,n2,n3), Xhat_norm, norm_XZ;
+	double X_norm = tensor_norm(X,n1,n2,n3), Xhat_norm, norm_XZ, error;
 
 	while(ite<max_iter){
 		ite += 1;

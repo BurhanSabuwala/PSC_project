@@ -8,6 +8,7 @@
 
 int n1,n2,n3,cp;
 
+
 struct matrices
 {
 	double hat_A[100][100],hat_B[100][100],hat_C[100][100];	
@@ -60,11 +61,11 @@ struct matrices mttkrp(double X[n1][n2][n3], double A[n1][cp], double B[n2][cp],
 void sample_init_X(double X[100][100][100], int n1, int n2, int n3){
 	printf("\nEnter the values of Tensor X\n");
 
-	for (k = 0; k < n3; ++k)
+	for (int k = 0; k < n3; ++k)
 		{	printf("Slice %d\n",k);
-			for (i = 0; i < n1; ++i)
+			for (int i = 0; i < n1; ++i)
 			{
-				for (j = 0; j < n2; ++j)
+				for (int j = 0; j < n2; ++j)
 				{
 					scanf("%lf",&X[i][j][k]);
 					printf(" ");
@@ -77,9 +78,9 @@ void sample_init_X(double X[100][100][100], int n1, int n2, int n3){
 
 void sample_init_ABC(double A[100][100], double B[100][100], double C[100][100], int n1,int n2, int n3,int cp){
 	printf("Enter the matr A\n");
-	for (i = 0; i < n1; ++i)
+	for (int i = 0; i < n1; ++i)
 		{
-			for(f=0;f<cp;f++)
+			for(int f=0;f<cp;f++)
 			{
 				scanf("%lf",&A[i][f]);
 				printf(" ");	
@@ -88,9 +89,9 @@ void sample_init_ABC(double A[100][100], double B[100][100], double C[100][100],
 		}	
 
 	printf("Enter the matr B\n");
-	for (j = 0; j < n2; ++j)
+	for (int j = 0; j < n2; ++j)
 		{
-			for(f=0;f<cp;f++)
+			for(int f=0;f<cp;f++)
 			{
 				scanf("%lf",&B[j][f]);
 				printf(" ");
@@ -99,9 +100,9 @@ void sample_init_ABC(double A[100][100], double B[100][100], double C[100][100],
 		}
 
 	printf("Enter the matr C\n");
-	for (k = 0; k < n3; ++k)
+	for (int k = 0; k < n3; ++k)
 		{
-			for(f=0;f<cp;f++)
+			for(int f=0;f<cp;f++)
 			{
 				scanf("%lf",&C[k][f]);
 				printf(" ");
@@ -112,8 +113,8 @@ void sample_init_ABC(double A[100][100], double B[100][100], double C[100][100],
 }
 
 void print_mat(double mat[][100], int s1, int s2){
-	for(i=0;i<s1;i++){
-		for(f=0;f<s2;f++){
+	for(int i=0;i<s1;i++){
+		for(int f=0;f<s2;f++){
 			printf("%f ",mat[i][f]);
 		}
 		printf("\n");
@@ -143,19 +144,6 @@ double tensor_norm(double X[][100][100], int n1,int n2, int n3){
 		}
 	}
 	return sqrt(sqsum);
-}
-
-void print_matrix(int nrowA, int ncolA, double A[][ncolA]){
-	/* Print matrix A*/
-
-	//Not meant for parallelization
-	for(int i=0;i<nrowA; i++){
-		for (int j=0; j<ncolA; j++){
-			//printf("%f ", *(A + i*ncolA + j));
-			printf("%f ", A[i][j]);
-		}
-		printf("\n");
-	}
 }
 
 void random_init(int nrowA, int ncolA, double A[][ncolA]){
@@ -199,6 +187,47 @@ void matmul(int nrowA, int ncolA, double A[][ncolA], int nrowB, int ncolB, doubl
 	}
 }
 
+void mat_vect_mul(double mat[][100],int s1, int s2, double vec[],int sv, double result[]){
+	if(s2!=sv){
+		printf("Not Compatible\n");
+		exit(0);
+	}
+
+	for(int i=0;i<s1;i++){
+		result[i] = 0;
+		for(int j=0;j<s2;j++){
+			result[i] += mat[i][j];
+		}
+	}
+}
+
+void vect_mat_mul(double mat[][100],int s1, int s2, double vec[],int sv, double result[]){
+	if(s1!=sv){
+		printf("Not Compatible\n");
+		exit(0);
+	}
+
+	for(int j=0;j<s1;j++){
+		result[j] = 0;
+		for(int i=0;i<s2;i++){
+			result[j] += mat[i][j];
+		}
+	}
+}
+
+void dot_product(double vec1[],int sv1,double vec2[],int sv2, double result){
+
+	if(sv1!=sv2){
+		printf("Not Compatible\n");
+		exit(0);
+	}
+
+	result = 0;
+	for(int i=0;i<sv1;i++){
+		result += vec1[i]*vec2[i];
+	}
+}
+
 void copy(int nrowA, int ncolA, double A[][ncolA], double B[][ncolA]){
 	/*Copy values of A to B. B should be of same size as A*/
 
@@ -220,7 +249,7 @@ void Hadamard(int nrow, int ncol, double A[][ncol], double B[][ncol], double C[]
 		for(int j=0; j<ncol; j++)
 			C[i][j] = A[i][j] * B[i][j];
 }
-
+    
 void Cholesky_Decomposition(int nrows, int ncols, double A[][ncols], double L[][ncols], int init_L)
 {
 	if (nrows!=ncols){
@@ -299,17 +328,15 @@ void inverse_symmetric_matrix(int nrow, int ncol, double A[][ncol], double inv_A
 
 double Z_norm(double A[100][100], double B[100][100], double C[100][100], int n1, int n2, int n3, int cp, double lambda[]){
 
-	double *fnorm_Z;
-
-	double lambda_t[cp];
+	double fnorm_Z=0;
 
 	double Ata[cp][cp], Btb[cp][cp], Ctc[cp][cp], tmp[cp][cp],full[cp][cp];
-	double A_t[cp][n1], B_t[cp][n2], C_t[cp][n3],tmp2[1][cp];
+	double A_t[cp][n1], B_t[cp][n2], C_t[cp][n3],tmp2[cp];
 
 	transpose(n1,cp,A,A_t);
 	transpose(n2,cp,B,B_t);
 	transpose(n3,cp,C,C_t);
-	
+
 	matmul(cp, n1, A_t, n1, cp, C, Ata);
 	matmul(cp, n2, B_t, n2, cp, C, Btb);
 	matmul(cp, n3, C_t, n3, cp, C, Ctc);
@@ -318,11 +345,10 @@ double Z_norm(double A[100][100], double B[100][100], double C[100][100], int n1
 	Hadamard(cp,cp,Ctc,Btb,tmp);
 	Hadamard(cp,cp,tmp,Ata,full);
 
-	transpose(cp,1,lambda,lambda_t);
-	matmul(1,cp,lambda_t,cp,cp,full,tmp2);
-	matmul(1,cp,tmp2,cp,1,lambda,fnorm_Z);
+	vect_mat_mul(full,cp,cp,lambda,cp,tmp2);
+	dot_product(lambda,cp,tmp2,cp,fnorm_Z);
 
-	return *fnorm_Z;
+	return fnorm_Z;
 }
 
 double XZ_norm(double X[][100][100],double A[100][100],double B[100][100],double C[100][100], int n1, int n2, int n3, int cp, double lambda[]){
@@ -355,6 +381,19 @@ void reconstruct(double Z[100][100][100], double A[][100], double B[][100], doub
 
 }
 
+
+void compute_lambda(double mat[][100],int s1, int s2,double lambda[]){
+	for(int j=0;j<s2;j++){
+		lambda[j] = 0;
+		for(int i=0;i<s1;i++){
+			lambda[j] += fabs(mat[i][j]);
+		}
+		for(int i=0;i<s1;i++){
+			mat[i][j] /= lambda[j];
+		}
+	}
+}
+
 int main(int argc,char* argv[]){
 
 	int i,j,k,f,cp,n1,n2,n3, max_iter = 1000, ite = 0;
@@ -369,7 +408,7 @@ int main(int argc,char* argv[]){
 	double Ata[cp][cp], Btb[cp][cp], Ctc[cp][cp];
 	double had_1[cp][cp], had_2[cp][cp], had_3[cp][cp];
 	double inv_had_1[cp][cp], inv_had_2[cp][cp], inv_had_3[cp][cp];
-	double Z[n1][n2][n3];
+	double Z[n1][n2][n3], lambda[cp];
 
 	sample_init_X(X,n1,n2,n3);
 	sample_init_ABC(A,B,C,n1,n2,n3,cp);
@@ -383,14 +422,21 @@ int main(int argc,char* argv[]){
 		transpose(n1,cp,A,A_t);
 		transpose(n2,cp,B,B_t);
 		transpose(n3,cp,C,C_t);
+
 		
-		matmul(cp, n1, A_t, n1, cp, C, Ata);
-		matmul(cp, n2, B_t, n2, cp, C, Btb);
+		if(ite==1){
+			print_mat(A,n1,cp);
+			printf("\n\n");
+			print_mat(A_t,cp,n1);
+		}
+
+		matmul(cp, n1, A_t, n1, cp, A, Ata);
+		matmul(cp, n2, B_t, n2, cp, B, Btb);
 		matmul(cp, n3, C_t, n3, cp, C, Ctc);
 
 		Hadamard(cp,cp,Ctc,Btb,had_1);
 		Hadamard(cp,cp,Ctc,Ata,had_2);
-		Hadamard(cp,cp,Btb,Ata,had_2);
+		Hadamard(cp,cp,Btb,Ata,had_3);
 
 		inverse_symmetric_matrix(cp,cp,had_1,inv_had_1);
 		inverse_symmetric_matrix(cp,cp,had_2,inv_had_2);
@@ -403,11 +449,18 @@ int main(int argc,char* argv[]){
 		matmul(cp,cp,inv_had_3,cp,n3,collection.hat_C,C_t);
 		transpose(cp,n3,C_t,C);
 
+
+		compute_lambda(C,n3,cp,lambda);
+
 		Xhat_norm = Z_norm(A,B,C,n1,n2,n3,cp,lambda); // Lambda?
 		norm_XZ = XZ_norm(X,A,B,C,n1,n2,n3,cp,lambda);
-		error = sqrt(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*norm_XZ*norm_XZ);
-	}
+		// printf("%f, %f, %f\n",X_norm,Xhat_norm,norm_XZ);
 
+		error = sqrt(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*norm_XZ*norm_XZ);
+		// printf("Iteration: %d, Error: %f\n",ite, error);
+
+	}
+	printf("Error: %f\n", error);
 	reconstruct(Z,A,B,C,n1,n2,n3,cp,lambda);
 
 	return 0;

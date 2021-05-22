@@ -302,7 +302,7 @@ void inverse_lower_triangular(int nrowL, int ncolL, double L[][ncolL], double Li
 			}else{
 				double sum = 0;
 				for(int k =j; k<i;k++){
-					sum += L[i][k]/L[k][j];
+					sum += L[i][k]*Linverse[k][j];
 				}
 				Linverse[i][j] = -sum/(L[i][i]);
 			}
@@ -438,6 +438,10 @@ int main(int argc,char* argv[]){
 		inverse_symmetric_matrix(cp,cp,had_2,inv_had_2);
 		inverse_symmetric_matrix(cp,cp,had_3,inv_had_3);
 
+		// if(ite==1){
+		// 	print_mat(cp,cp,inv_had_1);
+		// }
+
 		matmul(cp,cp,inv_had_1,cp,n1,collection.hat_A,A_t);
 		transpose(cp,n1,A_t,A);
 		matmul(cp,cp,inv_had_2,cp,n2,collection.hat_B,B_t);
@@ -446,6 +450,11 @@ int main(int argc,char* argv[]){
 		transpose(cp,n3,C_t,C);
 
 		compute_lambda(n3,cp,C,lambda);
+
+
+		// if(ite==1){
+		// 	print_mat(n1,cp,A);
+		// }
 
 		// if(ite==1){
 		// 	for(int i=0;i<cp;i++)
@@ -456,13 +465,14 @@ int main(int argc,char* argv[]){
 
 		Xhat_norm = Z_norm(n1,n2,n3,cp,A,B,C,lambda); // Lambda?
 		norm_XZ = XZ_norm(n1,n2,n3,cp,X,A,B,C,lambda);
-		printf("%f, %f, %f\n",X_norm,Xhat_norm,norm_XZ);
+		// printf("%f, %f, %f\n",X_norm,Xhat_norm,norm_XZ);
 
 		error = sqrt(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*norm_XZ*norm_XZ);
 		// printf("Iteration: %d, Error: %f\n",ite, error);
+		// break;
 
 	}
-	printf("Error: %f\n", error);
+	// printf("Final Error: %f\n", error);
 	reconstruct(Z,A,B,C,n1,n2,n3,cp,lambda);
 
 	return 0;

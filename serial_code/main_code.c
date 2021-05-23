@@ -388,8 +388,9 @@ void compute_lambda(int s1, int s2,double mat[][s2],double lambda[]){
 	for(int j=0;j<s2;j++){
 		lambda[j] = 0;
 		for(int i=0;i<s1;i++){
-			lambda[j] += fabs(mat[i][j]);
+			lambda[j] += mat[i][j]*mat[i][j];
 		}
+		lambda[j] = sqrt(lambda[j]);
 		for(int i=0;i<s1;i++){
 			mat[i][j] /= lambda[j];
 		}
@@ -398,12 +399,12 @@ void compute_lambda(int s1, int s2,double mat[][s2],double lambda[]){
 
 int main(int argc,char* argv[]){
 
-	int i,j,k,f,cp,n1,n2,n3, max_iter = 1000, ite = 0;
+	int i,j,k,f,cp,n1,n2,n3, max_iter = 10, ite = 0;
 	struct matrices collection;
 
-	printf("Enter the dimensions of the matrix: ");
+	printf("Enter the dimensions of the tensor: ");
 	scanf("%d,%d,%d",&n1,&n2,&n3);
-	printf("Enter number of components: ");
+	printf("Enter the rank: ");
 	scanf("%d",&cp);
 
 	double X[n1][n2][n3],A[n1][cp],B[n2][cp],C[n3][cp];
@@ -417,6 +418,14 @@ int main(int argc,char* argv[]){
 	sample_init_ABC(n1,n2,n3,cp,A,B,C);
 	
 	double X_norm = tensor_norm(X,n1,n2,n3), Xhat_norm, norm_XZ, error;
+
+		printf("Before\n");
+		print_mat(n1,cp,A);
+		printf("\n\n");
+		print_mat(n2,cp,B);
+		printf("\n\n");
+		print_mat(n3,cp,C);
+		printf("\n\n");	
 
 	while(ite<max_iter){
 		ite += 1;
@@ -452,9 +461,14 @@ int main(int argc,char* argv[]){
 		compute_lambda(n3,cp,C,lambda);
 
 
-		// if(ite==1){
-		// 	print_mat(n1,cp,A);
-		// }
+		if(ite>=1){
+			print_mat(n1,cp,A);
+			printf("\n\n");
+			print_mat(n2,cp,B);
+			printf("\n\n");
+			print_mat(n3,cp,C);	
+			printf("\n\n");	
+		}
 
 		// if(ite==1){
 		// 	for(int i=0;i<cp;i++)

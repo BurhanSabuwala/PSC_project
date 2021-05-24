@@ -6,6 +6,8 @@
 #include<omp.h>
 #endif
 
+// DEPRECATED!!!
+
 // int n1,n2,n3,cp;
 
 // struct matrices

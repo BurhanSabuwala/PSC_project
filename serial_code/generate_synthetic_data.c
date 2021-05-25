@@ -4,8 +4,9 @@
 #include<math.h>
 
 
-int L = 4;
-int F = 2;
+int L = 10;
+int F = 5;
+double PI = 3.14159;
 
 void print_mat(int s1, int s2,double mat[][s2]){
 	for(int i=0;i<s1;i++){
@@ -34,6 +35,34 @@ void transpose( int nrowA, int ncolA, double A[][ncolA], double A_t[][nrowA]){
 	for (int i=0; i<nrowA; i++)
 		for (int j=0; j<ncolA; j++)
 			A_t[j][i] = A[i][j];
+}
+
+double randn(double mu, double sigma){
+  double U1, U2, W, mult;
+  static double X1, X2;
+  static int call = 0;
+ 
+  if (call == 1)
+    {
+      call = !call;
+      return (mu + sigma * (double) X2);
+    }
+ 
+  do
+    {
+      U1 = -1 + ((double) rand () / RAND_MAX) * 2;
+      U2 = -1 + ((double) rand () / RAND_MAX) * 2;
+      W = pow (U1, 2) + pow (U2, 2);
+    }
+  while (W >= 1.0 || W == 0.0);
+ 
+  mult = sqrt ((-2 * log (W)) / W);
+  X1 = U1 * mult;
+  X2 = U2 * mult;
+ 
+  call = !call;
+ 
+  return (mu + sigma * (double) X1);
 }
 
 void matmul(int nrowA, int ncolA, double A[][ncolA], int nrowB, int ncolB, double B[][ncolB], double C[][ncolB]){
@@ -101,7 +130,7 @@ void Cholesky_Decomposition(int nrows, int ncols, double A[][ncols], double L[][
     //Loop carried dependency and therefore not parallelizable along one of the loop
     for (int i = 0; i < nrows; i++) {
         for (int j = 0; j <= i; j++) {
-            int sum = 0;
+            double sum = 0;
  
             if (j == i) // summation for diagnols
             {
@@ -120,7 +149,6 @@ void Cholesky_Decomposition(int nrows, int ncols, double A[][ncols], double L[][
 }
 
 void randvec(int size, double mat[]){
-	srand(time(0));
 	// Non-parallelizable
 	for(int i=0; i<size; i++){
 		mat[i] = (double)(rand() % 10000) / 10000.0;
@@ -128,12 +156,25 @@ void randvec(int size, double mat[]){
 }
 
 void randmat(int nrows, int ncols, double mat[][ncols]){
-	srand(time(0));
 	// Non-parallelizable
 	for(int i=0; i<nrows; i++){
 		for(int j=0; j<ncols; j++){
 			mat[i][j] = (double)(rand() % 10000) / 10000.0;
 	}}
+}
+
+double randtensor_normal(int nrows, int ncols, int nsli, double mat[][ncols][nsli]){
+	// Non-parallelizable
+	double sum = 0.0;
+	for(int i=0; i<nrows; i++){
+		for(int j=0; j<ncols; j++){
+			for(int k=0; k<nsli; k++){
+				double random_number = randn(0, 1);
+				mat[i][j][k] = random_number;
+				sum += pow(random_number,2);
+			}
+	}}
+	return sqrt(sum);
 }
 
 void init_congruence_mat(double A[][F], double congruence){
@@ -177,7 +218,7 @@ void initU(double U[][F]){
 			norm = norm + pow(U[k][i],2);
 		}
 
-		while(norm<0.00001){
+		while(norm<0.001){
 			printf("Need Reinitialization");
 			for(int k=0;k<L;k++){
 				U[k][i] = (double)(rand() % 10000) / 10000.0;
@@ -220,19 +261,96 @@ int main(){
 	Loading_matrix(A);
 	Loading_matrix(B);
 	Loading_matrix(C);
+	printf("Matrix A \n");
+	print_mat(L, F, A);
+	printf("Matrix B \n");
+	print_mat(L, F, B);
+	printf("Matrix C \n");
+	print_mat(L, F, C);
+
 	// Multiply A, B, C to get the final tensor
 	double tensor[L][L][L];
+	double sum = 0.0;
 	for(int i = 0; i<L; i++){
 		for(int j=0; j<L; j++){
 			for(int k=0; k<L; k++){
 				for (int iter=0; iter<F; iter++){
 					tensor[i][j][k] += A[i][iter]*B[j][iter]*C[k][iter];
+					sum += pow(A[i][iter]*B[j][iter]*C[k][iter],2);
 				}
 			}
 		}
 	}
+	sum = sqrt(sum);
+
+	double noise_tensor[L][L][L];
+	double eta = 0.05;
+	double n_norm = randtensor_normal(L, L, L, noise_tensor);
+	// Add noise
+	for(int i = 0; i<L; i++){
+		for(int j=0; j<L; j++){
+			for(int k=0; k<L; k++){
+				tensor[i][j][k] += eta*sum*noise_tensor[i][j][k]/n_norm;
+			}
+		}
+	}
+
+	//write in csv file
+	char fileA[] = "matrix_A.csv"; char fileB[] = "matrix_B.csv"; char fileC[] = "matrix_C.csv";
+	char filetensor[] = "Tensor.csv";
+	FILE* fpA=fopen(fileA,"w+"); FILE* fpB=fopen(fileB,"w+"); FILE* fpC=fopen(fileC,"w+");
+	FILE* fptensor=fopen(filetensor,"w+");
+
+	for(int i=0; i<L; i++){
+		for(int j=0; j<L; j++){
+			for(int k=0; k<L; k++){
+				if (k==L-1){
+					fprintf(fptensor, "%f\n", tensor[i][j][k]);
+				}else{
+					fprintf(fptensor, "%f, ", tensor[i][j][k]);
+				}
+			}
+		}fprintf(fptensor, "\n");
+	}
+	fclose(fptensor);
+
+	for(int i=0; i<L; i++){
+		for(int j=0; j<F; j++){
+			if (j==F-1){
+				fprintf(fpA, "%f\n", A[i][j]);
+			}else{
+				fprintf(fpA, "%f, ", A[i][j]);
+			}
+		}
+	}
+	fclose(fpA);
+
+	for(int i=0; i<L; i++){
+		for(int j=0; j<F; j++){
+			if (j==F-1){
+				fprintf(fpB, "%f\n", B[i][j]);
+			}else{
+				fprintf(fpB, "%f, ", B[i][j]);
+			}
+		}
+	}
+	fclose(fpB);
+
+	for(int i=0; i<L; i++){
+		for(int j=0; j<F; j++){
+			if (j==F-1){
+				fprintf(fpC, "%f\n", C[i][j]);
+			}else{
+				fprintf(fpC, "%f, ", C[i][j]);
+			}
+		}
+	}
+	fclose(fpC);
+
+
 
 	// print the matrix
+	printf("\n Tensor: \n");
 	for(int i=0; i<L; i++)
 		print_mat(L, L, tensor[i]);
 

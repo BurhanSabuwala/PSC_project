@@ -6,7 +6,9 @@
 #include<omp.h>
 #endif
 
-void mttkrp(int n1, int n2, int n3,int cp, int flag,double X[n1][n2][n3], double A[n1][cp], double B[n2][cp], double C[n3][cp], double hat_[][cp]){
+#define eps 1e-6
+
+void mttkrp(int n1, int n2, int n3,int cp, int flag,double X[n1][n2][n3], double A[][cp], double B[][cp], double C[][cp], double hat_[][cp]){
 	/*
 	Matricized tensor times Khatri-Rao product
 	*/
@@ -102,7 +104,7 @@ void sample_init_ABC(int n1,int n2, int n3,int cp,double A[n1][cp], double B[n2]
 }
 
 void random_init_factors(int n1,int n2, int n3, int cp, int flag, double A[][cp], double B[][cp], double C[][cp]){
-	srand(4);
+	srand(3);
 	if(flag==0){
 		for(int j=0;j<n2;j++){
 			for(int f = 0 ; f<cp ; f++){
@@ -193,7 +195,7 @@ void matmul(int nrowA, int ncolA, double A[][ncolA], int nrowB, int ncolB, doubl
 	}
 }
 
-void mat_vect_mul(double mat[][100],int s1, int s2, double vec[],int sv, double result[]){
+void mat_vect_mul(int s1, int s2, int sv,double mat[][s2], double vec[], double result[]){
 	if(s2!=sv){
 		printf("Not Compatible\n");
 		exit(0);
@@ -293,12 +295,14 @@ void Cholesky_Decomposition(int nrows, int ncols, double A[][ncols], double L[][
             {
                 for (int k = 0; k < j; k++)
                     sum += L[j][k]*L[j][k];
-                L[j][j] = sqrt(A[j][j] - sum);
+                L[j][j] = sqrt(fabs(A[j][j] - sum));
             } else {
  
                 // Evaluating L(i, j) using L(j, j)
                 for (int k = 0; k < j; k++)
                     sum += (L[i][k] * L[j][k]);
+          		if(L[j][j]<eps)
+          			L[j][j] = eps;
                 L[i][j] = (A[i][j] - sum) / L[j][j];
             }
         }
@@ -314,13 +318,18 @@ void inverse_lower_triangular(int nrowL, int ncolL, double L[][ncolL], double Li
 	for (int i=0; i<nrowL; i++){
 		for (int j=0; j<=i;j++){
 			if (i==j){
+				if(L[i][i]<eps)
+          			L[i][i] = eps;
 				Linverse[i][j] = 1/L[i][i];
 			}else{
 				double sum = 0;
 				for(int k =j; k<i;k++){
 					sum += L[i][k]*Linverse[k][j];
 				}
+				if(L[i][i]<eps)
+          			L[i][i] = eps;
 				Linverse[i][j] = -sum/(L[i][i]);
+				Linverse[j][i] = 0;
 			}
 		}
 	}
@@ -341,6 +350,7 @@ void inverse_symmetric_matrix(int nrow, int ncol, double A[][ncol], double inv_A
 
 	// Multiply to obtain the resulting inverse matrix
 	matmul(nrow, ncol, L_transpose_inverse, ncol, nrow, Linverse, inv_A);
+
 
 }
 
@@ -498,7 +508,7 @@ void max_col_norm(int s1, int s2, double mat[][s2], double lambda[]){
 
 int main(int argc,char* argv[]){
 
-	int cp,n1,n2,n3, max_iter = 50, ite = 0;
+	int cp,n1,n2,n3, max_iter = 1000, ite = 0;
 
 	printf("Enter the dimensions of the tensor: ");
 	scanf("%d,%d,%d",&n1,&n2,&n3);
@@ -531,8 +541,10 @@ int main(int argc,char* argv[]){
 		matmul(cp, n3, C_t, n3, cp, C, Ctc);
 		Hadamard(cp,cp,Ctc,Btb,had_1);
 		inverse_symmetric_matrix(cp,cp,had_1,inv_had_1);
+		
 		//Multiplying both terms
 		matmul(n1,cp,hat_A,cp,cp,inv_had_1,A);
+		
 		//Normalizing and updating lambda
 		if(ite==1)
 			col_2_norm(n1,cp,A,lambda);

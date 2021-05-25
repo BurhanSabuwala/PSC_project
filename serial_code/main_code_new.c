@@ -344,7 +344,7 @@ void inverse_symmetric_matrix(int nrow, int ncol, double A[][ncol], double inv_A
 
 }
 
-double Z_norm(int n1, int n2, int n3, int cp,double A[n1][cp], double B[n2][cp], double C[n3][cp], double lambda[]){
+double Z_norm(int n1, int n2, int n3, int cp,double AtA[][cp], double BtB[][cp], double C[n3][cp], double lambda[]){
 	/*
 		Calculates the norm of the reconstructed Matrix Z using the parts that make it
 		Arguments:
@@ -360,22 +360,18 @@ double Z_norm(int n1, int n2, int n3, int cp,double A[n1][cp], double B[n2][cp],
 	double fnorm_Z;
 
 	//Initialize Arrays
-	double Ata[cp][cp], Btb[cp][cp], Ctc[cp][cp], tmp[cp][cp],full[cp][cp];
-	double A_t[cp][n1], B_t[cp][n2], C_t[cp][n3],tmp2[cp];
+	double CtC[cp][cp], tmp[cp][cp],full[cp][cp];
+	double C_t[cp][n3],tmp2[cp];
 
-	//Transpose Matrices A, B and C
-	transpose(n1,cp,A,A_t);
-	transpose(n2,cp,B,B_t);
+	//Transpose Matrix C
 	transpose(n3,cp,C,C_t);
 
-	//Calculate AtA
-	matmul(cp, n1, A_t, n1, cp, A, Ata);
-	matmul(cp, n2, B_t, n2, cp, B, Btb);
-	matmul(cp, n3, C_t, n3, cp, C, Ctc);
+	//Calculate Ctc
+	matmul(cp, n3, C_t, n3, cp, C, CtC);
 
 	//Hadamard product of all three
-	Hadamard(cp,cp,Ctc,Btb,tmp);
-	Hadamard(cp,cp,tmp,Ata,full);
+	Hadamard(cp,cp,CtC,BtB,tmp);
+	Hadamard(cp,cp,tmp,AtA,full);
 
 	//lam.T hadamard lam
 	vect_mat_mul(cp,cp,cp,lambda,full,tmp2);
@@ -581,7 +577,7 @@ int main(int argc,char* argv[]){
 			max_col_norm(n3,cp,C,lambda);
 
 		//Error Calculation
-		Xhat_norm = Z_norm(n1,n2,n3,cp,A,B,C,lambda);
+		Xhat_norm = Z_norm(n1,n2,n3,cp,Ata,Btb,C,lambda);
 		prod_XZ = XZ_product(n1,n2,n3,cp,X,A,B,C,lambda);
 
 		error = sqrt(fabs(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*prod_XZ));

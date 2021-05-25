@@ -6,11 +6,11 @@
 #include<omp.h>
 #endif
 
-
 void mttkrp(int n1, int n2, int n3,int cp, int flag,double X[n1][n2][n3], double A[n1][cp], double B[n2][cp], double C[n3][cp], double hat_[][cp]){
 	/*
 	Matricized tensor times Khatri-Rao product
 	*/
+
 	int i,j,k,f;
 
 	// struct matrices collection;
@@ -55,7 +55,6 @@ void mttkrp(int n1, int n2, int n3,int cp, int flag,double X[n1][n2][n3], double
 			}
 		}
 
-	// return collection;
 }
 
 void sample_init_X( int n1, int n2, int n3, double X[n1][n2][n3]){
@@ -102,6 +101,22 @@ void sample_init_ABC(int n1,int n2, int n3,int cp,double A[n1][cp], double B[n2]
 
 }
 
+void random_init_factors(int n1,int n2, int n3, int cp, int flag, double A[][cp], double B[][cp], double C[][cp]){
+	srand(4);
+	if(flag==0){
+		for(int j=0;j<n2;j++){
+			for(int f = 0 ; f<cp ; f++){
+				B[j][f] = rand() / (double) RAND_MAX;
+			}
+		}
+		for(int k=0;k<n3;k++){
+			for(int f = 0 ; f<cp ; f++){
+				C[k][f] = rand() / (double) RAND_MAX;
+			}
+		}
+	}
+}
+
 void print_mat(int s1, int s2,double mat[][s2]){
 	for(int i=0;i<s1;i++){
 		for(int f=0;f<s2;f++){
@@ -125,7 +140,7 @@ double norm(double x[], int n){
 
 double tensor_norm(int n1,int n2, int n3,double X[][n2][n3]){
 	double sqsum = 0;
-
+	
 	//parallelizable with a reduction clause
 	for(int i =0; i<n1; i++){
 		for(int j = 0; j < n2; j++){
@@ -487,7 +502,7 @@ void max_col_norm(int s1, int s2, double mat[][s2], double lambda[]){
 
 int main(int argc,char* argv[]){
 
-	int cp,n1,n2,n3, max_iter = 10, ite = 0;
+	int cp,n1,n2,n3, max_iter = 50, ite = 0;
 
 	printf("Enter the dimensions of the tensor: ");
 	scanf("%d,%d,%d",&n1,&n2,&n3);
@@ -503,10 +518,12 @@ int main(int argc,char* argv[]){
 	double hat_A[n1][cp], hat_B[n2][cp], hat_C[n3][cp];
 
 	sample_init_X(n1,n2,n3,X);
-	sample_init_ABC(n1,n2,n3,cp,A,B,C);
-	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error;
+	random_init_factors(n1,n2,n3,cp,0,A,B,C);
+	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1;
 
-	while(ite<max_iter){
+	double tol = 1e-8;
+
+	while(ite<max_iter && error>tol){
 		ite += 1;
 		//Computing A
 		//MTTKRP with A
@@ -567,7 +584,8 @@ int main(int argc,char* argv[]){
 		Xhat_norm = Z_norm(n1,n2,n3,cp,A,B,C,lambda);
 		prod_XZ = XZ_product(n1,n2,n3,cp,X,A,B,C,lambda);
 
-		error = sqrt(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*prod_XZ);
+		error = sqrt(fabs(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*prod_XZ));
+
 		printf("Iteration: %d, Error: %f\n",ite, error);
 	}
 

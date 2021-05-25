@@ -104,7 +104,7 @@ void sample_init_ABC(int n1,int n2, int n3,int cp,double A[n1][cp], double B[n2]
 }
 
 void random_init_factors(int n1,int n2, int n3, int cp, int flag, double A[][cp], double B[][cp], double C[][cp]){
-	srand(3);
+	srand(time(0));
 	if(flag==0){
 		for(int j=0;j<n2;j++){
 			for(int f = 0 ; f<cp ; f++){
@@ -178,15 +178,11 @@ void matmul(int nrowA, int ncolA, double A[][ncolA], int nrowB, int ncolB, doubl
 		// raise error
 		printf("Matrix dimensions do not match for multiplication! \n");
 	}
-
-	//Parallelizable
-	for (int i = 0; i<nrowA; i++)
-		for(int j=0; j<ncolB; j++)
-			C[i][j] = 0;
-
+			
 	// Parallelizable 
 	for (int i=0; i<nrowA; i++){
 		for (int j=0; j<ncolB; j++){
+			C[i][j] = 0;
 			// require reduction
 			for (int k=0; k<nrowB; k++){
 				C[i][j] = C[i][j] + A[i][k]*B[k][j];
@@ -258,7 +254,8 @@ void copy(int nrowA, int ncolA, double A[][ncolA], double B[][ncolA]){
 			B[i][j] = A[i][j];
 }
 
-void Hadamard(int nrow, int ncol, double A[][ncol], double B[][ncol], double C[][ncol]){
+
+void Hadamard(int nrow, int ncol, double A[][ncol], double B[][ncol], int symm_flag, double C[][ncol]){
 	/* nrow - number of rows in A and B
 	 ncol - number of columns in A and B
 	 A is a two dimensional matrix
@@ -266,9 +263,16 @@ void Hadamard(int nrow, int ncol, double A[][ncol], double B[][ncol], double C[]
 	 C - resultant matrix*/
 
 	// Completely parallelizable
-	for(int i=0; i<nrow; i++)
-		for(int j=0; j<ncol; j++)
-			C[i][j] = A[i][j] * B[i][j];
+	if(symm_flag==0)
+		for(int i=0; i<nrow; i++)
+			for(int j=0; j<ncol; j++)
+				C[i][j] = A[i][j] * B[i][j];
+	else
+		for(int i=0; i<nrow; i++)
+			for(int j=0; j<=i; j++){
+				C[i][j] = A[i][j] * B[i][j];
+				C[j][i] = C[i][j];
+			}
 }
     
 void Cholesky_Decomposition(int nrows, int ncols, double A[][ncols], double L[][ncols])
@@ -380,8 +384,8 @@ double Z_norm(int n1, int n2, int n3, int cp,double AtA[][cp], double BtB[][cp],
 	matmul(cp, n3, C_t, n3, cp, C, CtC);
 
 	//Hadamard product of all three
-	Hadamard(cp,cp,CtC,BtB,tmp);
-	Hadamard(cp,cp,tmp,AtA,full);
+	Hadamard(cp,cp,CtC,BtB,1,tmp);
+	Hadamard(cp,cp,tmp,AtA,1,full);
 
 	//lam.T hadamard lam
 	vect_mat_mul(cp,cp,cp,lambda,full,tmp2);
@@ -527,7 +531,7 @@ int main(int argc,char* argv[]){
 	random_init_factors(n1,n2,n3,cp,0,A,B,C);
 	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1;
 
-	double tol = 1e-8;
+	double tol = 1e-6, fit;
 
 	while(ite<max_iter && error>tol){
 		ite += 1;
@@ -539,7 +543,7 @@ int main(int argc,char* argv[]){
 		transpose(n3,cp,C,C_t);
 		matmul(cp, n2, B_t, n2, cp, B, Btb);
 		matmul(cp, n3, C_t, n3, cp, C, Ctc);
-		Hadamard(cp,cp,Ctc,Btb,had_1);
+		Hadamard(cp,cp,Ctc,Btb,1,had_1);
 		inverse_symmetric_matrix(cp,cp,had_1,inv_had_1);
 		
 		//Multiplying both terms
@@ -559,7 +563,7 @@ int main(int argc,char* argv[]){
 		transpose(n3,cp,C,C_t);
 		matmul(cp, n1, A_t, n1, cp, A, Ata);
 		matmul(cp, n3, C_t, n3, cp, C, Ctc);
-		Hadamard(cp,cp,Ctc,Ata,had_2);
+		Hadamard(cp,cp,Ctc,Ata,1,had_2);
 		inverse_symmetric_matrix(cp,cp,had_2,inv_had_2);
 		//Multiplying both terms
 		matmul(n2,cp,hat_B,cp,cp,inv_had_2,B);
@@ -577,7 +581,7 @@ int main(int argc,char* argv[]){
 		transpose(n2,cp,B,B_t);
 		matmul(cp, n1, A_t, n1, cp, A, Ata);
 		matmul(cp, n2, B_t, n2, cp, B, Btb);
-		Hadamard(cp,cp,Btb,Ata,had_3);
+		Hadamard(cp,cp,Btb,Ata,1,had_3);
 		inverse_symmetric_matrix(cp,cp,had_3,inv_had_3);
 		//Multiplying both terms
 		matmul(n3,cp,hat_C,cp,cp,inv_had_3,C);
@@ -594,7 +598,9 @@ int main(int argc,char* argv[]){
 
 		error = sqrt(fabs(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*prod_XZ));
 
-		printf("Iteration: %d, Error: %f\n",ite, error);
+		fit = 1 - error/X_norm;
+
+		printf("Iteration: %d, Error: %f, Fit: %f\n",ite, error, fit);
 	}
 
 	printf("Final\n");
@@ -613,6 +619,7 @@ int main(int argc,char* argv[]){
 	}
 	printf("\n");
 	printf("Final Error: %f\n", error);
+	printf("Final Fit: %f\n", fit);
 	reconstruct(n1,n2,n3,cp,A,B,C,lambda,Z);
 	printf("\nReconstructed Tensor\n\n");
 	print_tensor(n1,n2,n3,Z);

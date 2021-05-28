@@ -772,8 +772,11 @@ int main(int argc,char* argv[]){
 	double Z[n1][n2][n3], lambda[cp];
 	double hat_A[n1][cp], hat_B[n2][cp], hat_C[n3][cp];
 
+	double	t1syn = omp_get_wtime();
 	generate_data(n1,n2,n3,F,X);
+	double	t2syn = omp_get_wtime();
 
+	double	t1cp = omp_get_wtime();
 	random_init_factors(n1,n2,n3,cp,0,A,B,C);
 	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1;
 
@@ -848,7 +851,7 @@ int main(int argc,char* argv[]){
 		if(ite%100==0)
 			printf("Iteration: %ld, Error: %f, Fit: %f\n",ite, error, fit);
 	}
-
+	double	t2cp = omp_get_wtime();	
 	// // Uncomment below lines to print the factor matrices, weights and reconstructed Tensor
 	// printf("Final\n");
 	// printf("A\n");
@@ -871,6 +874,8 @@ int main(int argc,char* argv[]){
 	printf("Final Error: %f\n", error);
 	printf("Final Fit: %f\n", fit);
 	
+	printf("Time Taken for Data synthesis: %e\n", (t2syn-t1syn));
+	printf("Time Taken for Data synthesis: %e\n", (t2cp-t1cp));
 
 	return 0;
 }

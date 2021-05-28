@@ -7,7 +7,7 @@
 #endif
 
 #define eps 1e-6
-double congruence = 0.17;
+// double congruence = 0.17;
 
 
 void mttkrp(int n1, int n2, int n3,int cp, int flag,double X[n1][n2][n3], double A[][cp], double B[][cp], double C[][cp], double hat_[][cp]){
@@ -106,7 +106,7 @@ void sample_init_ABC(int n1,int n2, int n3,int cp,double A[n1][cp], double B[n2]
 }
 
 void random_init_factors(int n1,int n2, int n3, int cp, int flag, double A[][cp], double B[][cp], double C[][cp]){
-	srand(time(0));
+	// srand(time(0));
 	if(flag==0){
 		for(int j=0;j<n2;j++){
 			for(int f = 0 ; f<cp ; f++){
@@ -694,7 +694,7 @@ double randtensor_normal(int nrows, int ncols, int nsli, double mat[][ncols][nsl
 }
 
 void generate_data(int n1, int n2, int n3, int cp, double tensor[][n2][n3]){
-	srand(time(0));
+	// srand(time(0));
 	int L = n1;
 	int F = cp;
 	double A[L][F], B[L][F], C[L][F];
@@ -740,6 +740,7 @@ int main(int argc,char* argv[]){
 		Arguments: 
 		n1,n2,n3: Size
 		F: Rank for synthesis
+		congruence: For synthesis
 		cp: Rank for reconstructing
 		max_iter: Maximum Number of Iterations
 		tol: Error Tolerance
@@ -747,9 +748,9 @@ int main(int argc,char* argv[]){
 
 	int cp,n1,n2,n3,F;
 	long int max_iter = 10000, ite = 0;
-	double tol = 1e-3;
+	double tol = 1e-3, congruence;
 
-	if(argc<=6 && argc > 8){
+	if(argc<=6 && argc > 9){
 		printf("Incorrect Number of Arguments\n");
 		exit(0);
 	}
@@ -758,9 +759,11 @@ int main(int argc,char* argv[]){
 		n2 = atoi(argv[2]);
 		n3 = atoi(argv[3]);
 		F = atoi(argv[4]);
-		cp = atoi(argv[5]);
-		max_iter = atoi(argv[6]);
-		tol = atof(argv[7]);
+		congruence = atof(argv[5])
+
+		cp = atoi(argv[6]);
+		max_iter = atoi(argv[7]);
+		tol = atof(argv[8]);
 	}
 
 
@@ -771,6 +774,8 @@ int main(int argc,char* argv[]){
 	double inv_had_1[cp][cp], inv_had_2[cp][cp], inv_had_3[cp][cp];
 	double Z[n1][n2][n3], lambda[cp];
 	double hat_A[n1][cp], hat_B[n2][cp], hat_C[n3][cp];
+
+	srand(1710);
 
 	double	t1syn = omp_get_wtime();
 	generate_data(n1,n2,n3,F,X);

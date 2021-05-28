@@ -736,11 +736,20 @@ void generate_data(int n1, int n2, int n3, int cp, double tensor[][n2][n3]){
 
 int main(int argc,char* argv[]){
 
+	/*
+		Arguments: 
+		n1,n2,n3: Size
+		F: Rank for synthesis
+		cp: Rank for reconstructing
+		max_iter: Maximum Number of Iterations
+		tol: Error Tolerance
+	*/
+
 	int cp,n1,n2,n3,F;
 	long int max_iter = 10000, ite = 0;
 	double tol = 1e-3;
 
-	if(argc!=8){
+	if(argc<=6 && argc > 8){
 		printf("Incorrect Number of Arguments\n");
 		exit(0);
 	}
@@ -755,11 +764,6 @@ int main(int argc,char* argv[]){
 	}
 
 
-	// printf("Enter the dimensions of the tensor: ");
-	// scanf("%d,%d,%d",&n1,&n2,&n3);
-	// printf("Enter the rank for initialization: ");
-	// scanf("%d",&cp);
-
 	double X[n1][n2][n3],A[n1][cp],B[n2][cp],C[n3][cp];
 	double A_t[cp][n1],B_t[cp][n2],C_t[cp][n3];
 	double Ata[cp][cp], Btb[cp][cp], Ctc[cp][cp];
@@ -770,14 +774,6 @@ int main(int argc,char* argv[]){
 
 	generate_data(n1,n2,n3,F,X);
 
-	// printf("Enter the rank for CP decompositon: ");
-	// scanf("%d",&cp);
-	// printf("Enter the max number of iterations: \n");
-	// scanf("%d",&max_iter);
-
-	// print_tensor(n1,n2,n3,X);
-
-	// sample_init_X(n1,n2,n3,X);
 	random_init_factors(n1,n2,n3,cp,0,A,B,C);
 	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1;
 
@@ -853,26 +849,28 @@ int main(int argc,char* argv[]){
 			printf("Iteration: %ld, Error: %f, Fit: %f\n",ite, error, fit);
 	}
 
-	printf("Final\n");
-	printf("A\n");
-	print_mat(n1,cp,A);
-	printf("\n\n");
-	printf("B\n");
-	print_mat(n2,cp,B);
-	printf("\n\n");
-	printf("C\n");
-	print_mat(n3,cp,C);	
-	printf("\n\n");	
-	for (int i = 0; i < cp; ++i)
-	{
-		printf("%f\n", lambda[i]);
-	}
+	// // Uncomment below lines to print the factor matrices, weights and reconstructed Tensor
+	// printf("Final\n");
+	// printf("A\n");
+	// print_mat(n1,cp,A);
+	// printf("\n\n");
+	// printf("B\n");
+	// print_mat(n2,cp,B);
+	// printf("\n\n");
+	// printf("C\n");
+	// print_mat(n3,cp,C);	
+	// printf("\n\n");	
+	// for (int i = 0; i < cp; ++i)
+	// {
+	// 	printf("%f\n", lambda[i]);
+	// }
+	// reconstruct(n1,n2,n3,cp,A,B,C,lambda,Z);
+	// printf("\nReconstructed Tensor\n\n");
+	// print_tensor(n1,n2,n3,Z);
 	printf("\n");
 	printf("Final Error: %f\n", error);
 	printf("Final Fit: %f\n", fit);
-	reconstruct(n1,n2,n3,cp,A,B,C,lambda,Z);
-	printf("\nReconstructed Tensor\n\n");
-	print_tensor(n1,n2,n3,Z);
+	
 
 	return 0;
 }

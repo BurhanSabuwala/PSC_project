@@ -737,12 +737,28 @@ void generate_data(int n1, int n2, int n3, int cp, double tensor[][n2][n3]){
 
 int main(int argc,char* argv[]){
 
-	int cp,n1,n2,n3, max_iter = 1000, ite = 0;
+	int cp,n1,n2,n3,F;
+	long int max_iter = 10000, ite = 0;
+	double tol = 1e-3;
 
-	printf("Enter the dimensions of the tensor: ");
-	scanf("%d,%d,%d",&n1,&n2,&n3);
-	printf("Enter the rank for initialization: ");
-	scanf("%d",&cp);
+	if(argc!=8){
+		printf("Incorrect Number of Arguments\n");
+	}
+	else{
+		n1 = atoi(argv[1]);
+		n2 = atoi(argv[2]);
+		n3 = atoi(argv[3]);
+		F = atoi(argv[4]);
+		cp = atoi(argv[5]);
+		max_iter = atof(argv[6]);
+		tol = atof(argv[7]);
+	}
+
+
+	// printf("Enter the dimensions of the tensor: ");
+	// scanf("%d,%d,%d",&n1,&n2,&n3);
+	// printf("Enter the rank for initialization: ");
+	// scanf("%d",&cp);
 
 	double X[n1][n2][n3],A[n1][cp],B[n2][cp],C[n3][cp];
 	double A_t[cp][n1],B_t[cp][n2],C_t[cp][n3];
@@ -752,10 +768,12 @@ int main(int argc,char* argv[]){
 	double Z[n1][n2][n3], lambda[cp];
 	double hat_A[n1][cp], hat_B[n2][cp], hat_C[n3][cp];
 
-	generate_data(n1,n2,n3,cp,X);
+	generate_data(n1,n2,n3,F,X);
 
-	printf("Enter the rank for CP decompositon: ");
-	scanf("%d",&cp);
+	// printf("Enter the rank for CP decompositon: ");
+	// scanf("%d",&cp);
+	// printf("Enter the max number of iterations: \n");
+	// scanf("%d",&max_iter);
 
 	// print_tensor(n1,n2,n3,X);
 
@@ -763,7 +781,7 @@ int main(int argc,char* argv[]){
 	random_init_factors(n1,n2,n3,cp,0,A,B,C);
 	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1;
 
-	double tol = 1e-6, fit;
+	double fit;
 
 	while(ite<max_iter && error>tol){
 		ite += 1;

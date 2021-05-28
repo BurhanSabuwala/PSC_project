@@ -669,7 +669,6 @@ void Loading_matrix(int L, int F, double loading_mat[][F]){
 
 	// column-orthogonal matrix
 	double U[L][F]; 
-	double Ut[F][L];
 	initU(L,F,U);
 
 	matmul(L, F, U, F, F, A, loading_mat);
@@ -743,6 +742,7 @@ int main(int argc,char* argv[]){
 
 	if(argc!=8){
 		printf("Incorrect Number of Arguments\n");
+		exit(0);
 	}
 	else{
 		n1 = atoi(argv[1]);
@@ -750,7 +750,7 @@ int main(int argc,char* argv[]){
 		n3 = atoi(argv[3]);
 		F = atoi(argv[4]);
 		cp = atoi(argv[5]);
-		max_iter = atof(argv[6]);
+		max_iter = atoi(argv[6]);
 		tol = atof(argv[7]);
 	}
 
@@ -850,7 +850,7 @@ int main(int argc,char* argv[]){
 
 		fit = 1 - error/X_norm;
 		if(ite%100==0)
-			printf("Iteration: %d, Error: %f, Fit: %f\n",ite, error, fit);
+			printf("Iteration: %ld, Error: %f, Fit: %f\n",ite, error, fit);
 	}
 
 	printf("Final\n");

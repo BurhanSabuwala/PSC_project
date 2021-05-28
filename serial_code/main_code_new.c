@@ -875,7 +875,7 @@ int main(int argc,char* argv[]){
 	printf("Final Fit: %f\n", fit);
 	
 	printf("Time Taken for Data synthesis: %e\n", (t2syn-t1syn));
-	printf("Time Taken for Data synthesis: %e\n", (t2cp-t1cp));
+	printf("Time Taken for CP Decomposition: %e\n", (t2cp-t1cp));
 
 	return 0;
 }

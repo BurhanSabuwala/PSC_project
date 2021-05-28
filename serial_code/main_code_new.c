@@ -7,6 +7,8 @@
 #endif
 
 #define eps 1e-6
+double congruence = 0.17;
+
 
 void mttkrp(int n1, int n2, int n3,int cp, int flag,double X[n1][n2][n3], double A[][cp], double B[][cp], double C[][cp], double hat_[][cp]){
 	/*
@@ -510,13 +512,236 @@ void max_col_norm(int s1, int s2, double mat[][s2], double lambda[]){
 
 }
 
+// void load_tensor_from_csv(int n1, int n2, int n3, double X[][n2][n3]){
+// 	FILE *fstream = fopen("data50/Tensor.csv","r");	
+// 	char *record,*line;
+// 	if(fstream == NULL){
+//       	printf("\n File Not Found");
+//       	return -1 ;
+//    	}
+//    	int tmp;
+//   //  	while((line=fgets(buffer,sizeof(buffer),fstream))!=NULL){
+// 		// record = strtok(line,",");
+// 		// while(record != NULL)
+// 		// {
+// 		// 	mat[i][j++] = atoi(record) ;
+// 		// 	record = strtok(NULL,",");
+// 		// }
+// 		// ++i ;
+//   //  }
+
+//    	for(int i=0;i<n1;i++){
+//    		for(int j=0;j<n2;j++){
+//    			for(int k=0;k<n3;k++){
+//    				fscanf(fstream,"%i",tmp)
+//    				printf("%s\n", tmp);
+//    			}
+//    			printf("\n");
+//    		}
+// 		printf("\n");
+//    	}
+// }
+
+
+
+void gramschmith(int i, int L, int F, double U[][F]){
+	for(int j = 0; j< i; j++){
+			double component = 0.0;
+			// dot product
+			for (int k=0; k<L; k++){
+				component += U[k][j]*U[k][i];
+			}
+			// This loop is parallelizable
+			for(int k =0; k<L; k++){
+				U[k][i] += -component*U[k][j];
+			}
+		}
+}
+double randn(double mu, double sigma){
+  double U1, U2, W, mult;
+  static double X1, X2;
+  static int call = 0;
+ 
+  if (call == 1)
+    {
+      call = !call;
+      return (mu + sigma * (double) X2);
+    }
+ 
+  do
+    {
+      U1 = -1 + ((double) rand () / RAND_MAX) * 2;
+      U2 = -1 + ((double) rand () / RAND_MAX) * 2;
+      W = pow (U1, 2) + pow (U2, 2);
+    }
+  while (W >= 1.0 || W == 0.0);
+ 
+  mult = sqrt ((-2 * log (W)) / W);
+  X1 = U1 * mult;
+  X2 = U2 * mult;
+ 
+  call = !call;
+ 
+  return (mu + sigma * (double) X1);
+}
+void random_scaling_of_columns(int L, int F, double U[][F]){
+	for(int i=0; i<F; i++){
+		double randnum = 1 +(double)(rand() % 9); 
+		for (int k=0; k<L; k++){
+			U[k][i] = randnum * U[k][i];
+		}
+	}
+}
+
+double get_colinearity(int i, int j, int L, int F, double loading_mat[][F]){
+	double normi=0.0;
+	double normj=0.0;
+	double dot_prod = 0.0;
+	for (int ii=0;ii<L;ii++){
+		dot_prod += loading_mat[ii][i] * loading_mat[ii][j];
+		normi += pow(loading_mat[ii][i],2);
+		normj += pow(loading_mat[ii][j],2);
+	}
+
+	return dot_prod/(sqrt(normi * normj));
+}
+
+void randmat(int nrows, int ncols, double mat[][ncols]){
+	// Non-parallelizable
+	for(int i=0; i<nrows; i++){
+		for(int j=0; j<ncols; j++){
+			mat[i][j] = (double)(rand() % 10000) / 10000.0;
+	}}
+}
+
+void initU(int L, int F, double U[][F]){
+	randmat(L, F, U);
+	// Gram-schmidth orthogonalization
+	for(int i=0; i<F; i++){
+		gramschmith(i, L, F, U);
+
+		//Normalization
+		double norm = 0;
+		for (int k =0; k<L; k++){
+			norm = norm + pow(U[k][i],2);
+		}norm = sqrt(norm);
+
+		while(norm<0.001){
+			// printf("Need Reinitialization");
+			for(int k=0;k<L;k++){
+				U[k][i] = (double)(rand() % 10000) / 10000.0;
+			}
+			gramschmith(i, L,F,U);
+			double norm = 0;
+			for (int k =0; k<L; k++){
+				norm += pow(U[k][i],2);
+			}norm =sqrt(norm);
+		}
+
+		// parallelizable
+		for (int k =0; k<L; k++){
+			U[k][i] = U[k][i]/norm;
+		}
+	}
+	
+}
+
+void init_congruence_mat(int F,double A[][F], double congruence){
+	int i,j;
+
+	//parallelizable loops
+	for (i=0; i<F;i++){
+		for (j = 0; j<F; j++){
+			if (i==j){
+				A[i][j] = 1.0;
+			}else{
+				A[i][j] = congruence;
+			}
+		}
+	}
+}
+
+void Loading_matrix(int L, int F, double loading_mat[][F]){
+	// define Congruence matrix
+
+	double A[F][F];
+	init_congruence_mat(F, A, congruence);
+
+	// column-orthogonal matrix
+	double U[L][F]; 
+	double Ut[F][L];
+	initU(L,F,U);
+
+	matmul(L, F, U, F, F, A, loading_mat);
+	random_scaling_of_columns(L,F,loading_mat);
+
+	printf("Colinearity: %f\n", get_colinearity(0,1,L,F, loading_mat));
+
+}
+
+
+double randtensor_normal(int nrows, int ncols, int nsli, double mat[][ncols][nsli]){
+	// Non-parallelizable
+	double sum = 0.0;
+	for(int i=0; i<nrows; i++){
+		for(int j=0; j<ncols; j++){
+			for(int k=0; k<nsli; k++){
+				double random_number = randn(0, 1);
+				mat[i][j][k] = random_number;
+				sum += pow(random_number,2);
+			}
+	}}
+	return sqrt(sum);
+}
+
+void generate_data(int n1, int n2, int n3, int cp, double tensor[][n2][n3]){
+	srand(time(0));
+	int L = n1;
+	int F = cp;
+	double A[L][F], B[L][F], C[L][F];
+	Loading_matrix(L,F,A);
+	Loading_matrix(L,F,B);
+	Loading_matrix(L,F,C);
+
+	// Multiply A, B, C to get the final tensor
+	// double tensor[L][L][L];
+	double sum = 0.0;
+	for(int i = 0; i<L; i++){
+		for(int j=0; j<L; j++){
+			for(int k=0; k<L; k++){
+				tensor[i][j][k] = 0.0;
+				for (int iter=0; iter<F; iter++){
+					tensor[i][j][k] += A[i][iter]*B[j][iter]*C[k][iter];
+					sum += pow(A[i][iter]*B[j][iter]*C[k][iter],2);
+				}
+			}
+		}
+	}
+	sum = sqrt(sum);
+
+	double noise_tensor[L][L][L];
+	double eta = 0.05;
+	double n_norm = randtensor_normal(L, L, L, noise_tensor);
+	// Add noise
+	for(int i = 0; i<L; i++){
+		for(int j=0; j<L; j++){
+			for(int k=0; k<L; k++){
+				tensor[i][j][k] += eta*sum*noise_tensor[i][j][k]/n_norm;
+			}
+		}
+	}
+
+}
+
+
+
 int main(int argc,char* argv[]){
 
 	int cp,n1,n2,n3, max_iter = 1000, ite = 0;
 
 	printf("Enter the dimensions of the tensor: ");
 	scanf("%d,%d,%d",&n1,&n2,&n3);
-	printf("Enter the rank: ");
+	printf("Enter the rank for initialization: ");
 	scanf("%d",&cp);
 
 	double X[n1][n2][n3],A[n1][cp],B[n2][cp],C[n3][cp];
@@ -527,7 +752,14 @@ int main(int argc,char* argv[]){
 	double Z[n1][n2][n3], lambda[cp];
 	double hat_A[n1][cp], hat_B[n2][cp], hat_C[n3][cp];
 
-	sample_init_X(n1,n2,n3,X);
+	generate_data(n1,n2,n3,cp,X);
+
+	printf("Enter the rank for CP decompositon: ");
+	scanf("%d",&cp);
+
+	// print_tensor(n1,n2,n3,X);
+
+	// sample_init_X(n1,n2,n3,X);
 	random_init_factors(n1,n2,n3,cp,0,A,B,C);
 	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1;
 
@@ -599,8 +831,8 @@ int main(int argc,char* argv[]){
 		error = sqrt(fabs(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*prod_XZ));
 
 		fit = 1 - error/X_norm;
-
-		printf("Iteration: %d, Error: %f, Fit: %f\n",ite, error, fit);
+		if(ite%100==0)
+			printf("Iteration: %d, Error: %f, Fit: %f\n",ite, error, fit);
 	}
 
 	printf("Final\n");

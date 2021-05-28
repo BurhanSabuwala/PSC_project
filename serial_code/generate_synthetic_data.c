@@ -4,8 +4,9 @@
 #include<math.h>
 
 
-int L = 10;
-int F = 5;
+int L = 50;
+int F = 25;
+double congruence = 0.17;
 double PI = 3.14159;
 
 void print_mat(int s1, int s2,double mat[][s2]){
@@ -75,7 +76,7 @@ void matmul(int nrowA, int ncolA, double A[][ncolA], int nrowB, int ncolB, doubl
 	//Parallelizable
 	for (int i = 0; i<nrowA; i++)
 		for(int j=0; j<ncolB; j++)
-			C[i][j] = 0;
+			C[i][j] = 0.0;
 
 	// Parallelizable 
 	for (int i=0; i<nrowA; i++){
@@ -130,7 +131,7 @@ void Cholesky_Decomposition(int nrows, int ncols, double A[][ncols], double L[][
     //Loop carried dependency and therefore not parallelizable along one of the loop
     for (int i = 0; i < nrows; i++) {
         for (int j = 0; j <= i; j++) {
-            double sum = 0;
+            double sum = 0.0;
  
             if (j == i) // summation for diagnols
             {
@@ -193,7 +194,7 @@ void init_congruence_mat(double A[][F], double congruence){
 }
 
 void gramschmith(int i, double U[][F]){
-	for(int j = 0; j< i-1; j++){
+	for(int j = 0; j< i; j++){
 			double component = 0.0;
 			// dot product
 			for (int k=0; k<L; k++){
@@ -216,7 +217,7 @@ void initU(double U[][F]){
 		double norm = 0;
 		for (int k =0; k<L; k++){
 			norm = norm + pow(U[k][i],2);
-		}
+		}norm = sqrt(norm);
 
 		while(norm<0.001){
 			printf("Need Reinitialization");
@@ -227,46 +228,76 @@ void initU(double U[][F]){
 			double norm = 0;
 			for (int k =0; k<L; k++){
 				norm += pow(U[k][i],2);
-			}
+			}norm =sqrt(norm);
 		}
 
-		//parallelizable
+		// parallelizable
 		for (int k =0; k<L; k++){
 			U[k][i] = U[k][i]/norm;
 		}
 	}
-	//Scaling randomly
+	
+}
+
+void random_scaling_of_columns(double U[][F]){
 	for(int i=0; i<F; i++){
-		int randnum = rand() % 10; 
+		double randnum = 1 +(double)(rand() % 9); 
 		for (int k=0; k<L; k++){
 			U[k][i] = randnum * U[k][i];
 		}
 	}
 }
 
+double get_colinearity(int i, int j, double loading_mat[][F]){
+	double normi=0.0;
+	double normj=0.0;
+	double dot_prod = 0.0;
+	for (int ii=0;ii<L;ii++){
+		dot_prod += loading_mat[ii][i] * loading_mat[ii][j];
+		normi += pow(loading_mat[ii][i],2);
+		normj += pow(loading_mat[ii][j],2);
+	}
+
+	return dot_prod/(sqrt(normi * normj));
+}
+
 void Loading_matrix(double loading_mat[][F]){
 	// define Congruence matrix
-	double A[F][F], R[F][F];
-	double congruence = 0.6; // 0< colinearity < 1
-	init_congruence_mat(A, congruence);
-	Cholesky_Decomposition(F, F, A, R, 0);
 
-	double U[L][F]; // column-orthogonal matrix
+	double A[F][F];
+	init_congruence_mat(A, congruence);
+
+	// column-orthogonal matrix
+	double U[L][F]; 
+	double Ut[F][L];
 	initU(U);
-	matmul(L, F, U, F, F, R, loading_mat);
+
+	matmul(L, F, U, F, F, A, loading_mat);
+	random_scaling_of_columns(loading_mat);
+
+	printf("Colinearity: %f\n", get_colinearity(0,1, loading_mat));
+	// for(int i=0; i<F; i++){
+	// 	for(int j=0; j<F; j++){
+	// 		printf("%f  ", get_colinearity(i, j, loading_mat));;
+	// 	}
+	// 	printf("\n");
+	// }
+
 }
 
 int main(){
+	srand(time(0));
 	double A[L][F], B[L][F], C[L][F];
 	Loading_matrix(A);
 	Loading_matrix(B);
 	Loading_matrix(C);
-	printf("Matrix A \n");
-	print_mat(L, F, A);
-	printf("Matrix B \n");
-	print_mat(L, F, B);
-	printf("Matrix C \n");
-	print_mat(L, F, C);
+	
+	// printf("Matrix A \n");
+	// print_mat(L, F, A);
+	// printf("Matrix B \n");
+	// print_mat(L, F, B);
+	// printf("Matrix C \n");
+	// print_mat(L, F, C);
 
 	// Multiply A, B, C to get the final tensor
 	double tensor[L][L][L];
@@ -274,6 +305,7 @@ int main(){
 	for(int i = 0; i<L; i++){
 		for(int j=0; j<L; j++){
 			for(int k=0; k<L; k++){
+				tensor[i][j][k] = 0.0;
 				for (int iter=0; iter<F; iter++){
 					tensor[i][j][k] += A[i][iter]*B[j][iter]*C[k][iter];
 					sum += pow(A[i][iter]*B[j][iter]*C[k][iter],2);
@@ -350,9 +382,9 @@ int main(){
 
 
 	// print the matrix
-	printf("\n Tensor: \n");
-	for(int i=0; i<L; i++)
-		print_mat(L, L, tensor[i]);
+	// printf("\n Tensor: \n");
+	// for(int i=0; i<L; i++)
+	// 	print_mat(L, L, tensor[i]);
 
 	return 0;
 }

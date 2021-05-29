@@ -747,8 +747,8 @@ int main(int argc,char* argv[]){
 	*/
 
 	int cp,n1,n2,n3,F;
-	long int max_iter = 10000, ite = 0;
-	double tol = 1e-3, congruence;
+	long int max_iter = 100000, ite = 0;
+	double tol = 1e-6, congruence;
 
 	if(argc<=6 && argc > 9){
 		printf("Incorrect Number of Arguments\n");
@@ -760,7 +760,6 @@ int main(int argc,char* argv[]){
 		n3 = atoi(argv[3]);
 		F = atoi(argv[4]);
 		congruence = atof(argv[5])
-
 		cp = atoi(argv[6]);
 		max_iter = atoi(argv[7]);
 		tol = atof(argv[8]);
@@ -783,11 +782,11 @@ int main(int argc,char* argv[]){
 
 	double	t1cp = omp_get_wtime();
 	random_init_factors(n1,n2,n3,cp,0,A,B,C);
-	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1;
+	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1,error_old = 5;
 
 	double fit;
 
-	while(ite<max_iter && error>tol){
+	while(ite<max_iter && fabs(error-error_old)>tol){
 		ite += 1;
 		//Computing A
 		//MTTKRP with A
@@ -849,7 +848,8 @@ int main(int argc,char* argv[]){
 		//Error Calculation
 		Xhat_norm = Z_norm(n1,n2,n3,cp,Ata,Btb,C,lambda);
 		prod_XZ = XZ_product(n1,n2,n3,cp,X,A,B,C,lambda);
-
+		
+		error_old = error;
 		error = sqrt(fabs(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*prod_XZ));
 
 		fit = 1 - error/X_norm;
@@ -878,6 +878,7 @@ int main(int argc,char* argv[]){
 	printf("\n");
 	printf("Final Error: %f\n", error);
 	printf("Final Fit: %f\n", fit);
+	printf("Number of Iterations: %ld\n", ite);
 	
 	printf("Time Taken for Data synthesis: %e\n", (t2syn-t1syn));
 	printf("Time Taken for CP Decomposition: %e\n", (t2cp-t1cp));

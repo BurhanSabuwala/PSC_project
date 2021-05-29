@@ -782,11 +782,11 @@ int main(int argc,char* argv[]){
 
 	double	t1cp = omp_get_wtime();
 	random_init_factors(n1,n2,n3,cp,0,A,B,C);
-	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1,error_old = 5;
+	double X_norm = tensor_norm(n1,n2,n3,X), Xhat_norm, prod_XZ, error=1;
 
-	double fit;
+	double fit = 1, fit_old = 5;
 
-	while(ite<max_iter && fabs(error-error_old)>tol){
+	while(ite<max_iter && fabs(fit-fit_old)>tol){
 		ite += 1;
 		//Computing A
 		//MTTKRP with A
@@ -849,9 +849,9 @@ int main(int argc,char* argv[]){
 		Xhat_norm = Z_norm(n1,n2,n3,cp,Ata,Btb,C,lambda);
 		prod_XZ = XZ_product(n1,n2,n3,cp,X,A,B,C,lambda);
 		
-		error_old = error;
 		error = sqrt(fabs(X_norm*X_norm + Xhat_norm*Xhat_norm - 2*prod_XZ));
 
+		fit_old = fit;
 		fit = 1 - error/X_norm;
 		if(ite%100==0)
 			printf("Iteration: %ld, Error: %f, Fit: %f\n",ite, error, fit);

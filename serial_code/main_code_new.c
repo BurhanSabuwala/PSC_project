@@ -661,7 +661,7 @@ void init_congruence_mat(int F,double A[][F], double congruence){
 	}
 }
 
-void Loading_matrix(int L, int F, double loading_mat[][F]){
+void Loading_matrix(int L, int F, double congruence, double loading_mat[][F]){
 	// define Congruence matrix
 
 	double A[F][F];
@@ -693,14 +693,14 @@ double randtensor_normal(int nrows, int ncols, int nsli, double mat[][ncols][nsl
 	return sqrt(sum);
 }
 
-void generate_data(int n1, int n2, int n3, int cp, double tensor[][n2][n3]){
+void generate_data(int n1, int n2, int n3, int cp, double congruence, double tensor[][n2][n3]){
 	// srand(time(0));
 	int L = n1;
 	int F = cp;
 	double A[L][F], B[L][F], C[L][F];
-	Loading_matrix(L,F,A);
-	Loading_matrix(L,F,B);
-	Loading_matrix(L,F,C);
+	Loading_matrix(L,F, congruence,A);
+	Loading_matrix(L,F, congruence,B);
+	Loading_matrix(L,F,congruence,C);
 
 	// Multiply A, B, C to get the final tensor
 	// double tensor[L][L][L];
@@ -759,7 +759,7 @@ int main(int argc,char* argv[]){
 		n2 = atoi(argv[2]);
 		n3 = atoi(argv[3]);
 		F = atoi(argv[4]);
-		congruence = atof(argv[5])
+		congruence = atof(argv[5]);
 		cp = atoi(argv[6]);
 		max_iter = atoi(argv[7]);
 		tol = atof(argv[8]);
@@ -777,7 +777,7 @@ int main(int argc,char* argv[]){
 	srand(1710);
 
 	double	t1syn = omp_get_wtime();
-	generate_data(n1,n2,n3,F,X);
+	generate_data(n1,n2,n3,F,congruence,X);
 	double	t2syn = omp_get_wtime();
 
 	double	t1cp = omp_get_wtime();

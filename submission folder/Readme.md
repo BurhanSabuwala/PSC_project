@@ -45,7 +45,8 @@ gcc -fopenmp openmp_code_final.c -lm
 File: openacc_code_final.c
 commands to run the code:
 ```
-gcc -fopenmp openacc_code_final.c -lm
+module load nvhpc-compiler
+/sware/hpc_sdk/Linux_x86_64/2020/compilers/bin/pgcc -acc -Minfo=accel $PBS_O_WORKDIR/openacc_code_final.c >>output 2>>output
 ./a.out 50 50 50 25 0.18 80 10000 1e-8 50
 ./a.out 100 100 100 50 0.14 120 100000 1e-8 100
 ./a.out 200 200 200 100 0.105 180 100000 1e-4 200

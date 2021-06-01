@@ -15,7 +15,7 @@ Note: openmp used during compilation is only for profiling the code.
 ```
 ./a.out n1 n2 n3 F congruence cp max_iter tol
 ```
-- n1, n2, n3 are int data types. They specify the dimensions of the tensor. In our experiments we considered all three of them to be equal.
+- n1, n2, n3 are int data types. They specify the dimensions of the tensor. In our experiments, we considered all three of them to be equal.
 - (int) F is the true rank of the tensor. 
 - (double) congruence is used to adjust the colinearity. Colinearity decides how 
 - (int) cp is the number of components present in factor matrix obtained during decomposition
@@ -34,7 +34,7 @@ gcc -fopenmp openmp_code_final.c -lm
 ```
 ./a.out n1 n2 n3 F congruence cp max_iter tol num_threads
 ```
-- n1, n2, n3 are int data types. They specify the dimensions of the tensor. In our experiments we considered all three of them to be equal.
+- n1, n2, n3 are int data types. They specify the dimensions of the tensor. In our experiments, we considered all three of them to be equal.
 - (int) F is the true rank of the tensor. 
 - (double) congruence is used to adjust the colinearity. Colinearity decides how 
 - (int) cp is the number of components present in factor matrix obtained during decomposition
@@ -56,7 +56,7 @@ Note: openmp used during compilation is only for profiling the code.
 ```
 ./a.out n1 n2 n3 F congruence cp max_iter tol num_gangs
 ```
-- n1, n2, n3 are int data types. They specify the dimensions of the tensor. In our experiments we considered all three of them to be equal.
+- n1, n2, n3 are int data types. They specify the dimensions of the tensor. In our experiments, we considered all three of them to be equal.
 - (int) F is the true rank of the tensor. 
 - (double) congruence is used to adjust the colinearity. Colinearity decides how 
 - (int) cp is the number of components present in factor matrix obtained during decomposition

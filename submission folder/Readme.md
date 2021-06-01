@@ -1,4 +1,5 @@
-# Submission folder for ID5130 Parallel Scientific Computing course project
+# Submission folder for ID5130 Parallel Scientific Computing course project: Canonical Polyadic Alternating Least Squares Tensor Decomposition Method
+
 Authors: Burhanuddin Sabuwala (BE17B011), Prashant G (BS17B011)
 
 ## Serial code
